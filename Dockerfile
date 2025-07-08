@@ -1,4 +1,4 @@
-FROM node:22.11.0-bullseye-slim as node
+FROM node:22.11.0-bullseye-slim AS node
 
 FROM ubuntu:24.04
 
@@ -6,7 +6,7 @@ COPY --from=node /usr/local/ /usr/local/
 
 WORKDIR /app
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Common libraries
 RUN apt-get update && \
@@ -18,16 +18,18 @@ RUN apt-get update && \
     apt-get install -y software-properties-common && \
     add-apt-repository ppa:libreoffice/ppa && \
     apt-get update && \
-    apt-get install -y --no-install-recommends libreoffice && \
+    apt-get install -y --no-install-recommends libreoffice ttf-mscorefonts-installer && \
     apt-get remove -y --auto-remove software-properties-common && \
     rm -rf /var/lib/apt/lists/*
 
 # Unoserver
 RUN apt-get update && \
-   apt-get install -y python3-pip && \
-   pip install unoserver --break-system-packages && \
-   apt-get remove -y --auto-remove python3-pip && \
-   rm -rf /var/lib/apt/lists/*
+    apt-get install -y python3-pip && \
+    pip install unoserver --break-system-packages && \
+    apt-get remove -y --auto-remove python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g corepack@latest
 
 RUN corepack disable && corepack enable
 
@@ -37,6 +39,8 @@ COPY fonts/*.ttf /usr/share/fonts/
 RUN fc-cache -f -v
 
 COPY pnpm-lock.yaml package.json ./
+
+ENV PNPM_DISABLE_VERIFICATION=1
 
 RUN pnpm fetch
 
